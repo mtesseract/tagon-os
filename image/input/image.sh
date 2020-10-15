@@ -4,6 +4,8 @@ echo
 echo "** Tagon Modifications **"
 echo
 
+echo skipped
+
 touch ${ROOTFS_PATH}/tagon
 apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant docker 
 
@@ -29,3 +31,6 @@ for file in $(find "${ROOTFS_PATH}" -type l); do
     echo "[!!] Temporary workaround: changing link destination for \"$file\" from \"$orig_dest\" to \"$dest\""
     ln -sf "$dest" "$file"
 done
+
+ROOTFS_SIZE="$(du -sm "$ROOTFS_PATH")"
+echo "** Root FS ($ROOTFS_PATH) size: $ROOTFS_SIZE"
