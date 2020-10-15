@@ -3,7 +3,7 @@
 build:
 	docker run \
 		--env-file config.env \
-		--rm -it \
+		--rm \
 		-v input:/input \
 		-v output:/output \
 		bboehmke/raspi-alpine-builder
