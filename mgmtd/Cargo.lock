@@ -254,6 +254,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
+name = "envy"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f938a4abd5b75fe3737902dbc2e79ca142cc1526827a9e40b829a086758531a9"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "error-chain"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -520,6 +529,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "043175f069eda7b85febe4a74abbaeff828d9f8b448515d3151a14a3542811aa"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "mgmtd"
+version = "0.0.0"
+dependencies = [
+ "envy",
+ "github-rs",
+ "serde",
+ "serde_json",
+ "slog",
+ "slog-async",
+ "slog-scope",
+ "slog-term",
 ]
 
 [[package]]
@@ -891,19 +914,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
-]
-
-[[package]]
-name = "tagon-auto-updater"
-version = "0.1.0"
-dependencies = [
- "github-rs",
- "serde",
- "serde_json",
- "slog",
- "slog-async",
- "slog-scope",
- "slog-term",
 ]
 
 [[package]]

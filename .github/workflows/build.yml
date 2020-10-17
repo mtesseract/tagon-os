@@ -6,9 +6,13 @@ name: CI
 # events but only for the master branch
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+    tags:
+      - "*"
   pull_request:
-    branches: [master]
+    branches:
+      - master
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -21,7 +25,35 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      - name: Set up QEMU
+        with:
+          fetch-depth: 0
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            mgmtd/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Retrieve Version Tag
+        id: version
+        run: |
+          git fetch --tags --force # See https://github.com/actions/checkout/issues/290
+          VERSION=$(make tag)
+          echo "VERSION=$VERSION"
+          SHORT_VERSION="$(echo "$VERSION" | cut -d - -f 1)"
+          echo "SHORT_VERSION=$SHORT_VERSION"
+          if git tag --points-at HEAD | grep -q "^${SHORT_VERSION}$"; then
+            RELEASE="true"
+            echo "Release mode"
+          else
+            RELEASE="false"
+            echo "No Release mode"
+          fi
+          echo "::set-output name=VERSION::$VERSION"
+          echo "::set-output name=SHORT_VERSION::$SHORT_VERSION"
+          echo "::set-output name=RELEASE::$RELEASE"
+
+      - name: Set up Docker QEMU Support
         id: qemu
         uses: docker/setup-qemu-action@v1
         with:
@@ -29,10 +61,69 @@ jobs:
           platforms: arm
 
       - name: Build Image
-        uses: ./.github/actions/alpine-raspberry-builder
+        # uses: ./.github/actions/alpine-raspberry-builder
         id: image
+        env:
+          VERSION: "${{ steps.version.outputs.VERSION }}"
+          SHORT_VERSION: "${{ steps.version.outputs.SHORT_VERSION }}"
+        run: |
+          make build-image
 
-      - uses: actions/upload-artifact@v2
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: tagon-os-images
-          path: image/output
+          path: artifacts
+
+      - name: Create a Release
+        id: create_release
+        if: ${{ steps.version.outputs.RELEASE == 'true' }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.SHORT_VERSION }}
+          release_name: "TagonOS ${{ steps.version.outputs.SHORT_VERSION }}"
+          body: "Test"
+          draft: true
+
+      - name: Upload Release Asset (full img)
+        if: ${{ steps.version.outputs.RELEASE == 'true' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/tagon-os-${{ steps.version.outputs.SHORT_VERSION }}_full-img.gz
+          asset_name: tagon-os-${{ steps.version.outputs.SHORT_VERSION }}_full-img.gz
+          asset_content_type: application/gzip
+      - name: Upload Release Asset (full img checksum)
+        if: ${{ steps.version.outputs.RELEASE == 'true' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/tagon-os-${{ steps.version.outputs.SHORT_VERSION }}_full-img.gz.sha256
+          asset_name: tagon-os-${{ steps.version.outputs.SHORT_VERSION }}_full-img.gz.sha256
+          asset_content_type: text/plain
+      - name: Upload Release Asset (update img)
+        if: ${{ steps.version.outputs.RELEASE == 'true' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/tagon-os-${{ steps.version.outputs.SHORT_VERSION }}_update-img.gz
+          asset_name: tagon-os-${{ steps.version.outputs.SHORT_VERSION }}_update-img.gz
+          asset_content_type: application/gzip
+      - name: Upload Release Asset (update img checksum)
+        if: ${{ steps.version.outputs.RELEASE == 'true' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/tagon-os-${{ steps.version.outputs.SHORT_VERSION }}_update-img.gz.sha256
+          asset_name: tagon-os-${{ steps.version.outputs.SHORT_VERSION }}_update-img.gz.sha256
+          asset_content_type: text/plain
