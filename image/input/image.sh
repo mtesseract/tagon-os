@@ -1,19 +1,24 @@
 #!/bin/sh
 
-USB_MOUNT=/mnt/usb
+USB_MOUNT=/media/usb
 
 echo
 echo "** Tagon Modifications **"
 echo
 
-echo "Prepare USB Storage"
-chroot_exec mkdir -p /mnt/usb
+cp /input/config.env "${ROOTFS_PATH}/image-builder.config"
+cp /artifacts/bin/mgmtd "${ROOTFS_PATH}/sbin/tagon-os-mgmtd"
+echo "$VERSION" | tee "${ROOTFS_PATH}/tagon-version"
 
-cp /artifacts/bin/mgmtd ${ROOTFS_PATH}/sbin/tagon-os-mgmtd
-echo $VERSION | tee ${ROOTFS_PATH}/tagon
+# Is this required?
+# chroot_exec rc-update add swclock boot    # enable the software clock
+# chroot_exec rc-update del hwclock boot    # disable the hardware clock
+
+echo "Update fstab"
+echo "/dev/sda1   ${USB_MOUNT}  vfat    defaults    0   2" >> "${ROOTFS_PATH}/etc/fstab"
 
 echo "Prepare WLAN"
-apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd
+apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd wireless-regdb iw
 
 # Move wpa_supplicant configuration to USB
 
@@ -30,12 +35,12 @@ chroot_exec rc-update add wpa_supplicant
 chroot_exec rc-update add dhcpcd default
 
 chroot_exec rm -f /etc/wpa_supplicant/wpa_supplicant.conf
-chroot_exec ln -sf "${USB_MOUNT}/wpa_supplicant/wpa_supplicant.conf" /etc/wpa_supplicant/wpa_supplicant.conf
+chroot_exec ln -sf "${USB_MOUNT}/wlan/wpa_supplicant.conf" /etc/wpa_supplicant/wpa_supplicant.conf
 
 echo "Setup Docker"
 
 apk --root ${ROOTFS_PATH} add docker
-
+chroot_exec rc-update add docker
 
 
 # Bug Workaround (https://github.com/bestouff/genext2fs/issues/19)
