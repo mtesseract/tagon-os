@@ -1,7 +1,7 @@
 
 .PHONY: tag build-image build-mgmtd
 
-VERSION=$(shell git describe --long --dirty)
+VERSION=$(shell git describe --dirty)
 .EXPORT_ALL_VARIABLES:
 
 tag:
