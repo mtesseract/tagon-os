@@ -20,6 +20,7 @@ echo "/dev/sda1   ${USB_MOUNT}  vfat    defaults    0   2" >> "${ROOTFS_PATH}/et
 echo "Prepare WLAN"
 apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd wireless-regdb iw
 
+
 # Move wpa_supplicant configuration to USB
 
 # Install Raspberry Pi Firmware
