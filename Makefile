@@ -37,9 +37,9 @@ artifacts/bin/mgmtd:
 			/home/rust/.cargo/registry \
 			target \
 		  && cargo build --release \
-		  && cargo install --path . --root=/artifacts\
+		  && cargo install --path . --root=/artifacts \
+		  && rm -f artifacts/.crates.toml artifacts/.crates2.json \
 		'
-	rm -f artifacts/.crates.toml artifacts/.crates2.jsonm
 
 test:
 	echo $$VERSION
