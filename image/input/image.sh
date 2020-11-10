@@ -18,7 +18,7 @@ echo "Update fstab"
 echo "/dev/sda1   ${USB_MOUNT}  vfat    defaults    0   2" >> "${ROOTFS_PATH}/etc/fstab"
 
 echo "Prepare WLAN"
-apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd wireless-regdb crda iw
+apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd wireless-regdb iw
 
 # Move wpa_supplicant configuration to USB
 
