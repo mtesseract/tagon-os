@@ -18,8 +18,7 @@ echo "Update fstab"
 echo "/dev/sda1   ${USB_MOUNT}  vfat    defaults    0   2" >> "${ROOTFS_PATH}/etc/fstab"
 
 echo "Prepare WLAN"
-apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd
-
+apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd wireless-regdb crda iw
 
 # Move wpa_supplicant configuration to USB
 
@@ -36,7 +35,7 @@ chroot_exec rc-update add wpa_supplicant
 chroot_exec rc-update add dhcpcd default
 
 chroot_exec rm -f /etc/wpa_supplicant/wpa_supplicant.conf
-chroot_exec ln -sf "${USB_MOUNT}/wpa_supplicant/wpa_supplicant.conf" /etc/wpa_supplicant/wpa_supplicant.conf
+chroot_exec ln -sf "${USB_MOUNT}/wlan/wpa_supplicant.conf" /etc/wpa_supplicant/wpa_supplicant.conf
 
 echo "Setup Docker"
 
