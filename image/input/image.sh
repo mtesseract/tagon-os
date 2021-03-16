@@ -2,9 +2,13 @@
 
 USB_MOUNT=/media/usb
 
-echo
-echo "** Tagon Modifications **"
-echo
+section() {
+    echo
+    echo "$1"
+    echo
+}
+
+section "** Tagon Modifications **"
 
 cp /input/config.env "${ROOTFS_PATH}/image-builder.config"
 cp /artifacts/bin/mgmtd "${ROOTFS_PATH}/sbin/tagon-os-mgmtd"
@@ -14,11 +18,11 @@ echo "$VERSION" | tee "${ROOTFS_PATH}/tagon-version"
 # chroot_exec rc-update add swclock boot    # enable the software clock
 # chroot_exec rc-update del hwclock boot    # disable the hardware clock
 
-echo "Update fstab"
+section "Update fstab"
 echo "/dev/sda1   ${USB_MOUNT}  vfat    defaults    0   2" >> "${ROOTFS_PATH}/etc/fstab"
 
-echo "Prepare WLAN"
-apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd wireless-regdb iw
+section "Prepare WLAN"
+apk --root ${ROOTFS_PATH} add wireless-tools wpa_supplicant dhcpcd wireless-regdb iw curl
 
 # Move wpa_supplicant configuration to USB
 
@@ -37,11 +41,13 @@ chroot_exec rc-update add dhcpcd default
 chroot_exec rm -f /etc/wpa_supplicant/wpa_supplicant.conf
 chroot_exec ln -sf "${USB_MOUNT}/wlan/wpa_supplicant.conf" /etc/wpa_supplicant/wpa_supplicant.conf
 
-echo "Setup Docker"
-
-apk --root ${ROOTFS_PATH} add docker
-chroot_exec rc-update add docker
-
+section "Setup K3s"
+k3s_bootargs="cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory"
+current_bootargs="$(head -1 ${BOOTFS_PATH}/cmdline.txt)"
+new_bootargs="${current_bootargs} ${k3s_bootargs}"
+echo "Kernel boot arguments: $new_bootargs"
+echo "$new_bootargs" > "${BOOTFS_PATH}/cmdline.txt"
+chroot_exec curl -sfL https://get.k3s.io | sh -
 
 # Bug Workaround (https://github.com/bestouff/genext2fs/issues/19)
 # genext2fs needs to be updated.
